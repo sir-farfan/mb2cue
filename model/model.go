@@ -10,12 +10,14 @@ type Track struct {
 	Position int    `json:"position"`
 }
 
-func (t Track) FormatCue(offset int64) int64 {
-
+func (t Track) FormatCue(offset, gap int64) int64 {
 	fmt.Printf("  TRACK %02d AUDIO\n", t.Position)
 	fmt.Printf("    TITLE \"%s\"\n", t.Title)
 	fmt.Printf("    INDEX 01 %s\n", FormatIndex(offset))
-	return offset + t.Length
+	if gap > 0 && offset > 0 {
+		fmt.Printf("    INDEX 02 %s\n", FormatIndex(offset+gap))
+	}
+	return offset + t.Length + gap
 }
 
 type Media struct {
@@ -24,11 +26,11 @@ type Media struct {
 	Tracks   []Track `json:"tracks"`
 }
 
-func (m Media) FormatCue() {
+func (m Media) FormatCue(gap int64) {
 	offset := int64(0)
 	fmt.Printf("FILE \"%s\" WAVE\n", m.FormatID)
 	for _, t := range m.Tracks {
-		offset = t.FormatCue(offset)
+		offset = t.FormatCue(offset, gap)
 	}
 }
 
@@ -38,11 +40,11 @@ type Release struct {
 	Media []Media `json:"Media"`
 }
 
-func (r Release) FormatCue() {
+func (r Release) FormatCue(gap int64) {
 	fmt.Println("REM release id " + r.ID)
 	fmt.Printf("TITLE \"%s\"\n", r.Title)
 	for _, m := range r.Media {
-		m.FormatCue()
+		m.FormatCue(gap)
 	}
 }
 
